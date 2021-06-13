@@ -53,7 +53,10 @@ namespace servidor
 
                 // Se inicializa un hilo con el cliente
                 Thread thread = new Thread(EscucharConexion);
+               
                 thread.Start();
+               
+
             }
         }
 
@@ -62,9 +65,13 @@ namespace servidor
             Cliente copiaCliente = nuevoCliente;
             do
             {
+                Console.WriteLine("do");
                 try
                 {
+                    Console.WriteLine("1 try");
                     string tmp = copiaCliente.reader.ReadLine();
+                    Console.WriteLine("mensaje enviado por el cliente " + copiaCliente.nombre + ": " + tmp);
+
                     try
                     {
                         for (int i= 0; i< clientesConectados.Count(); i++)
@@ -73,7 +80,9 @@ namespace servidor
                            clientesConectados[i].writter.Flush();
                         }
                     }
-                    catch{}
+                    catch{
+                        Console.WriteLine("error en el cliente");
+                    }
 
                 }
                 catch
@@ -89,7 +98,7 @@ namespace servidor
         {
             Servidor servidor = new Servidor();
             Console.WriteLine("Escriba el IP");
-            servidor.ip = "25.2.35.141";
+            servidor.ip = "25.107.59.124";
             Console.WriteLine("Escriba el puerto");
             servidor.puerto = "46000";
             servidor.Conexion();
