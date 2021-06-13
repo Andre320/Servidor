@@ -74,7 +74,7 @@ namespace servidor
 
                     try
                     {
-                        for (int i= 0; i< clientesConectados.Count(); i++)
+                        for (int i= 0; i< clientesConectados.Count; i++)
                         {
                            clientesConectados[i].writter.WriteLine(tmp);
                            clientesConectados[i].writter.Flush();
