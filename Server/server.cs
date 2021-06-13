@@ -2,81 +2,97 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Net.Sockets;
-using System.Net;
+using System.Threading;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 
-namespace Servidor.Server
+namespace servidor
 {
-    class Server
+    class Servidor
     {
-        public static void Main()
+        private TcpListener servidor;
+        private TcpClient cliente = new TcpClient();
+        private List<Cliente> clientesConectados = new List<Cliente>();
+        Cliente nuevoCliente = new();
+        public string ip;
+        public string puerto;
+
+        private struct Cliente
         {
-            TcpListener server = null;
-            try
+            public NetworkStream stream;
+            public StreamReader reader;
+            public StreamWriter writter;
+
+
+            public string color;
+            public string nombre;
+            public string data;
+        }
+        public void Conexion()
+        {
+            IPEndPoint IPconnection = new IPEndPoint(IPAddress.Parse(ip), int.Parse(puerto));
+            Console.WriteLine("Inciando servidor...");
+            servidor = new TcpListener(IPconnection);
+            servidor.Start();
+
+            while (true)
             {
-                // Set the TcpListener on port 13000.
-                Int32 port = 13000;
-                IPAddress localAddr = IPAddress.Parse("25.107.59.124");
+                cliente = servidor.AcceptTcpClient();
+                nuevoCliente.stream = cliente.GetStream();
+                nuevoCliente.reader = new StreamReader(nuevoCliente.stream);
+                nuevoCliente.writter = new StreamWriter(nuevoCliente.stream);
+                nuevoCliente.color = nuevoCliente.reader.ReadLine();
+                nuevoCliente.nombre = nuevoCliente.reader.ReadLine();
+                nuevoCliente.data = nuevoCliente.reader.ReadLine();
 
-                // TcpListener server = new TcpListener(port);
-                server = new TcpListener(localAddr, port);
+                // Añadir cliente a lista para saber que esta conectado
+                clientesConectados.Add(nuevoCliente);
 
-                // Start listening for client requests.
-                server.Start();
+                Console.WriteLine(nuevoCliente.nombre + " se ha conectado, con el color "+ nuevoCliente.color);
 
-                // Buffer for reading data
-                Byte[] bytes = new Byte[10000];
-                String data = null;
+                // Se inicializa un hilo con el cliente
+                Thread thread = new Thread(EscucharConexion);
+                thread.Start();
+            }
+        }
 
-                // Enter the listening loop.
-                while (true)
+        public void EscucharConexion()
+        {
+            Cliente copiaCliente = nuevoCliente;
+            do
+            {
+                try
                 {
-                    Console.Write("Waiting for a connection... ");
-
-                    // Perform a blocking call to accept requests.
-                    // You could also use server.AcceptSocket() here.
-                    TcpClient client = server.AcceptTcpClient();
-                    Console.WriteLine("Connected!");
-
-                    data = null;
-
-                    // Get a stream object for reading and writing
-                    NetworkStream stream = client.GetStream();
-
-                    int i;
-
-                    // Loop to receive all the data sent by the client.
-                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+                    string tmp = copiaCliente.reader.ReadLine();
+                    try
                     {
-                        // Translate data bytes to a ASCII string.
-                        data = Encoding.ASCII.GetString(bytes, 0, i);
-                        Console.WriteLine("Received: {0}", data);
-
-                        byte[] msg = Encoding.ASCII.GetBytes(data);
-
-                        // Send back a response.
-                        stream.Write(msg, 0, msg.Length);
-                        Console.WriteLine("Sent: {0}", data);
+                        for (int i= 0; i< clientesConectados.Count(); i++)
+                        {
+                           clientesConectados[i].writter.WriteLine(tmp);
+                           clientesConectados[i].writter.Flush();
+                        }
                     }
+                    catch{}
 
-                    // Shutdown and end connection
-                    client.Close();
                 }
-            }
-            catch (SocketException e)
-            {
-                Console.WriteLine("SocketException: {0}", e);
-            }
-            finally
-            {
-                // Stop listening for new clients.
-                server.Stop();
-            }
+                catch
+                {
+                    clientesConectados.Remove(nuevoCliente);
+                    Console.WriteLine(nuevoCliente.nombre + " se ha desconectado");
+                    break;
+                }
+            } while (true);
+        }
 
-            Console.WriteLine("\nHit enter to continue...");
-            Console.Read();
+        static void Main(string[] args)
+        {
+            Servidor servidor = new Servidor();
+            Console.WriteLine("Escriba el IP");
+            servidor.ip = "25.2.35.141";
+            Console.WriteLine("Escriba el puerto");
+            servidor.puerto = "46000";
+            servidor.Conexion();
         }
     }
 }
