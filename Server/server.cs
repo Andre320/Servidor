@@ -65,10 +65,10 @@ namespace servidor
             Cliente copiaCliente = nuevoCliente;
             do
             {
-                Console.WriteLine("do");
+                
                 try
                 {
-                    Console.WriteLine("1 try");
+                   
                     string tmp = copiaCliente.reader.ReadLine();
                     Console.WriteLine("mensaje enviado por el cliente " + copiaCliente.nombre + ": " + tmp);
 
